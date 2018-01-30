@@ -42,7 +42,7 @@ class IngestReceiver:
                     ingestExporter.generateBundles(submittedObject["documentId"])
                     ingestExporter.completeSubmission(submittedObject["documentId"])
                 except Exception, e:
-                    self.logger.error("Failed to export to dss: "+submittedObject["documentId"]+ ", error:"+str(e))
+                    self.logger.exception("Failed to export to dss: "+submittedObject["documentId"]+ ", error:"+str(e))
 
         channel.basic_consume(callback,
                               queue=self.queue,
