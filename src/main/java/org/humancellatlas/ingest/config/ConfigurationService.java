@@ -41,7 +41,7 @@ public class ConfigurationService implements InitializingBean {
     @Value("${blueboxApiPath:'/'}")
     private String blueboxApiPath;
 
-    @Getter(AccessLevel.NONE) private URI BLUEBOX_API_URI;
+    @Getter(AccessLevel.NONE) public URI BLUEBOX_API_URI;
 
 
     public void init() {

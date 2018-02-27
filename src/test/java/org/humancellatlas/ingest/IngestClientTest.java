@@ -1,37 +1,81 @@
-package org.humancellatlas.ingest.util;
+package org.humancellatlas.ingest;
 
-/**
- * Created by rolando on 23/02/2018.
- */
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import org.humancellatlas.ingest.client.IngestClient;
+import org.humancellatlas.ingest.client.impl.IngestClientImpl;
+import org.humancellatlas.ingest.model.EntityType;
+import org.humancellatlas.ingest.model.SubmissionEnvelopeReference;
+import org.humancellatlas.ingest.testutil.MockConfigurationService;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.*;
 
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+
 import static org.junit.Assert.*;
 
-
-public class IngestClientUtilTests {
+/**
+ * Created by rolando on 23/02/2018.
+ */
+public class IngestClientTest {
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(8088);
 
+    public IngestClientTest() {
+
+    }
+
     @Test
-    public void testResourcePageCollection() throws Exception {
+    public void testGetAllEntitiesForSubmissionEnvelope() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String mockIngestApiUri = "http://localhost:8088";
-        String mockEntityType = "mockentities";
+        String mockEnvelopeId = "mockenvelopeid";
+        String mockEnvelopeUri = mockIngestApiUri + "/envelopes/" + mockEnvelopeId;
+        String mockEntityType = EntityType.PROCESSES.toString().toLowerCase();
         String mockEntitiesUri = mockIngestApiUri + "/" + mockEntityType;
+        SubmissionEnvelopeReference mockEnvelopeReference = new SubmissionEnvelopeReference(
+                mockEnvelopeId,
+                UUID.randomUUID(),
+                "/envelopes/" + mockEnvelopeId);
+
+        // set up a stub for a mock submission envelope resource
+        class MockEnvelope {
+            @JsonProperty("_links") Map<String, Object> _links;
+
+            MockEnvelope() {
+                _links = new HashMap<String, Object>() {{
+                    put(mockEntityType, new HashMap<String, Object>() {{
+                        put("href", mockEntitiesUri);
+                    }});
+                    put("self", new HashMap<String, Object>() {{
+                        put("href", mockEnvelopeUri);
+                    }});
+                }};
+            }
+        }
+
+        MockEnvelope mockEnvelope = new MockEnvelope();
+
+        stubFor(
+                get(urlEqualTo("/envelopes/" + mockEnvelopeId))
+                        .withHeader("Accept", equalTo("application/hal+json"))
+                        .willReturn(aResponse()
+                                .withStatus(200)
+                                .withHeader("Content-Type", "application/hal+json")
+                                .withBody(new ObjectMapper().writeValueAsString(mockEnvelope))));
 
         // set up stubs for three small pages, each with 4 embedded resources
-
         class MockEntity {
-            @JsonProperty("content") Map<String, Object> content;
+            @JsonProperty("content")
+            Map<String, Object> content;
             @JsonProperty("uuid") Map<String, Object> uuid;
 
             MockEntity() {
@@ -66,7 +110,6 @@ public class IngestClientUtilTests {
                         put("href", mockEntitiesUri + "{?page,size,sort}");
                         put("templated", true);
                     }});
-
                 }};
 
                 if(!last) {
@@ -107,18 +150,8 @@ public class IngestClientUtilTests {
                                 .withHeader("Content-Type", "application/hal+json")
                                 .withBody(new ObjectMapper().writeValueAsString(pageThree))));
 
-        Collection<JsonNode> jsons = IngestClientUtil.getAllResources(mockEntitiesUri);
-        // assert we collected all resources from the 3 pages of 4
-        assertTrue(jsons.size() == 12);
-        // assert all UUIDs are different
-        Set<String> uuids = new HashSet<>();
-
-        jsons.forEach(json -> {
-            String uuid = json.get("uuid").get("uuid").toString();
-            assertTrue(! uuids.contains(uuid));
-            uuids.add(uuid);
-        });
-
+        IngestClient ingestClient = new IngestClientImpl(MockConfigurationService.create());
+        Collection<JsonNode> entityResources = ingestClient.getAllEntitiesForSubmissionEnvelope(mockEnvelopeReference, EntityType.PROCESSES);
+        assertTrue(entityResources.size() == 12);
     }
-
 }

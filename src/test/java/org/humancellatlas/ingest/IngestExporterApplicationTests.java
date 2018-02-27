@@ -11,6 +11,6 @@ public class IngestExporterApplicationTests {
 
 	@Test
 	public void contextLoads() {
-	}
 
+	}
 }
