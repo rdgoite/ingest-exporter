@@ -31,6 +31,8 @@ public class ExportServiceImpl implements ExportService {
 
     @Override
     public void exportSubmission(SubmissionEnvelopeReference submissionEnvelopeReference) {
+        List<ProcessJson> processes = getProcessesForSubmissionWithOutputs(submissionEnvelopeReference);
+        List<ProcessJson> bundleableProcess = filterBundleableProcesses(processes);
 
     }
 
@@ -39,6 +41,21 @@ public class ExportServiceImpl implements ExportService {
                 .getAllEntitiesForSubmissionEnvelope(submissionEnvelopeReference, EntityType.PROCESSES)
                 .stream()
                 .map(ProcessJson::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProcessJson> getProcessesForSubmissionWithOutputs(SubmissionEnvelopeReference submissionEnvelopeReference) {
+        return ingestClient
+                .getAllEntitiesForSubmissionEnvelopeWithProjection(submissionEnvelopeReference, EntityType.PROCESSES, "withOutputFiles")
+                .stream()
+                .map(ProcessJson::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProcessJson> filterBundleableProcesses(List<ProcessJson> processes) {
+        return processes
+                .stream()
+                .filter(processJson -> processJson.getJson().get("outputFiles").elements().hasNext())
                 .collect(Collectors.toList());
     }
 }

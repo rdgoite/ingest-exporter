@@ -14,4 +14,6 @@ public interface IngestClient {
 
     Collection<JsonNode> getAllEntitiesForSubmissionEnvelope(SubmissionEnvelopeReference envelopeReference, EntityType entityType);
 
+    Collection<JsonNode> getAllEntitiesForSubmissionEnvelopeWithProjection(SubmissionEnvelopeReference envelopeReference, EntityType entityType, String projection);
+
 }
