@@ -26,6 +26,7 @@ repositories {
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-amqp')
 	compile('org.springframework.boot:spring-boot-starter-hateoas')
+	compile('com.google.guava:guava:24.0-jre')
 	compileOnly('org.projectlombok:lombok')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 	testCompile('com.github.tomakehurst:wiremock-standalone:2.14.0')

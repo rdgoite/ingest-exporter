@@ -3,9 +3,7 @@ package org.humancellatlas.ingest.export.impl;
 import org.humancellatlas.ingest.client.IngestClient;
 import org.humancellatlas.ingest.config.ConfigurationService;
 import org.humancellatlas.ingest.export.ExportService;
-import org.humancellatlas.ingest.model.EntityType;
-import org.humancellatlas.ingest.model.ProcessJson;
-import org.humancellatlas.ingest.model.SubmissionEnvelopeReference;
+import org.humancellatlas.ingest.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
@@ -32,7 +30,10 @@ public class ExportServiceImpl implements ExportService {
     @Override
     public void exportSubmission(SubmissionEnvelopeReference submissionEnvelopeReference) {
         List<ProcessJson> processes = getProcessesForSubmissionWithOutputs(submissionEnvelopeReference);
-        List<ProcessJson> bundleableProcess = filterBundleableProcesses(processes);
+        List<BundleableProcess> bundleableProcess = filterBundleableProcesses(processes)
+                .stream()
+                .map(BundleableProcess::fromProcess)
+                .collect(Collectors.toList());
 
     }
 
@@ -57,5 +58,17 @@ public class ExportServiceImpl implements ExportService {
                 .stream()
                 .filter(processJson -> processJson.getJson().get("outputFiles").elements().hasNext())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     *
+     * Given a process, follows it's inputs/provenances to create a full transformation graph
+     *
+     * @param bundleableProcess
+     * @return
+     */
+    public TransformationChain buildTransformationChain(BundleableProcess bundleableProcess) {
+        // first, insert the output files and link them back to the bundleable process
+        bundleableProcess.getOutputFiles().forEach(output);
     }
 }

@@ -5,12 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
- * Created by rolando on 22/02/2018.
+ * Created by rolando on 28/02/2018.
  */
 @Data
 @AllArgsConstructor
-public class ProcessJson implements EntityJson {
-    private JsonNode json;
+public class FileJson implements EntityJson {
+   private JsonNode json;
 
-    ProcessJson() {}
 }
