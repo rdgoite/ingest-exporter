@@ -25,10 +25,10 @@ class Listener:
     commands that were issued and that should surface in the output as well.
 
     """
-    EXCHANGE = 'ingest.validation.exchange'
-    EXCHANGE_TYPE = 'direct'
-    QUEUE = 'ingest.metadata.validation.queue'
-    ROUTING_KEY = 'ingest.metadata.validation.queue'
+    EXCHANGE = 'ingest.envelope.submitted.exchange'
+    EXCHANGE_TYPE = 'fanout'
+    QUEUE = 'ingest.envelope.submitted.queue'
+    ROUTING_KEY = ''
 
     def __init__(self, options={}):
         """Create a new instance of the consumer class, passing in the AMQP
@@ -41,8 +41,9 @@ class Listener:
         self.rabbit = options.rabbit if options.rabbit else os.path.expandvars(DEFAULT_RABBIT_URL)
         self.logger.debug("rabbit url is "+self.rabbit )
 
-        self.queue = options.queue if options.queue else DEFAULT_QUEUE_NAME
-        self.logger.debug("rabbit queue is "+self.queue )
+        self.QUEUE = options.queue if options.queue else DEFAULT_QUEUE_NAME
+
+        self.logger.debug("rabbit queue is "+self.QUEUE )
 
         self._connection = None
         self._channel = None
