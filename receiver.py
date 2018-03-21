@@ -35,7 +35,7 @@ class IngestReceiver:
         assayCompletedMessage["assayIndex"] = assayMessage["assayIndex"]
         assayCompletedMessage["totalAssays"] = assayMessage["totalAssays"]
 
-        connection = pika.BlockingConnection(pika.ConnectionParameters(DEFAULT_RABBIT_URL))
+        connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
         channel = connection.channel()
         channel.basic_publish(exchange=EXCHANGE,
                               routing_key=ASSAY_COMPLETED_ROUTING_KEY,
