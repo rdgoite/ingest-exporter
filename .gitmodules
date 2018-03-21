@@ -1,4 +1,4 @@
-[submodule "ingest-broker"]
+[submodule "ingestbroker"]
 	path = ingestbroker
-	url = git@github.com:HumanCellAtlas/ingest-broker.git
-	branch = "develope/parallel-export"
+	url = https://github.com/HumanCellAtlas/ingest-broker.git
+	branch = develope/parallel-export
