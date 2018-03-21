@@ -13,12 +13,10 @@ class IngestReceiver:
     def __init__(self):
         self.logger = LOGGER
 
-    def run(self, submittedObject):
-        if "documentId" in submittedObject:
-            try:
-                ingestExporter = IngestExporter()
-                ingestExporter.processSubmission(submittedObject["documentId"])
-                ingestExporter.generateBundles(submittedObject["documentId"])
-                ingestExporter.completeSubmission(submittedObject["documentId"])
-            except Exception, e:
-                self.logger.exception("Failed to export to dss: "+submittedObject["documentId"]+ ", error:"+str(e))
+    def run(self, newAssayMessage):
+        try:
+            ingestExporter = IngestExporter()
+            ingestExporter.generateAssayBundle(newAssayMessage)
+            ingestExporter.completeBundle(newAssayMessage)
+        except Exception, e:
+            self.logger.exception("Failed to export to dss: "+newAssayMessage["callbackLink"]+ ", error:"+str(e))
