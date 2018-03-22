@@ -15,7 +15,7 @@ from listener import Listener
 
 
 def initReceivers(options):
-    # start a listener for validation job completion messages coming from the upload-service
+    # start a listener for new assay messages and attempt to create a bundle
     listener = Listener(options)
     t = threading.Thread(target=listener.run)
     t.start()
