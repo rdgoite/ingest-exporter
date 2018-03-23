@@ -280,8 +280,7 @@ class Listener:
         try:
             self._processor.run(json.loads(body))
             self.acknowledge_message(basic_deliver.delivery_tag)
-            LOGGER.info('Acknowledged message',
-                        basic_deliver.delivery_tag, properties.app_id, body)
+            LOGGER.info('Acknowledged message')
         except Exception as e:
             LOGGER.error(e)
 
