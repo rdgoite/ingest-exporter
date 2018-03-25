@@ -13,7 +13,7 @@ import logging
 from receiver import IngestReceiver
 
 
-DEFAULT_RABBIT_URL=os.environ.get('RABBIT_URL', 'amqp://localhost:5672')
+DEFAULT_RABBIT_URL=os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
 EXCHANGE = 'ingest.assays.exchange'
 EXCHANGE_TYPE = 'topic'
 QUEUE = 'ingest.assays.bundle.create'
