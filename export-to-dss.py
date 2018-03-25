@@ -8,17 +8,33 @@ __license__ = "Apache 2.0"
 
 
 from optparse import OptionParser
-import os, sys
+import os, sys, pika, json
 import logging
-import threading
-from listener import Listener
+from receiver import IngestReceiver
 
+
+DEFAULT_RABBIT_URL=os.environ.get('RABBIT_URL', 'amqp://localhost:5672')
+EXCHANGE = 'ingest.assays.exchange'
+EXCHANGE_TYPE = 'topic'
+QUEUE = 'ingest.assays.bundle.create'
+ROUTING_KEY = 'ingest.assays.submitted'
 
 def initReceivers(options):
-    # start a listener for new assay messages and attempt to create a bundle
-    listener = Listener(options)
-    t = threading.Thread(target=listener.run)
-    t.start()
+    receiver = IngestReceiver()
+    connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
+    channel = connection.channel()
+    channel.queue_declare(queue=QUEUE)
+    channel.queue_bind(queue=QUEUE, exchange=EXCHANGE, routing_key=ROUTING_KEY)
+
+    def callback(ch, method, properties, body):
+        receiver.run(json.loads(body))
+        ch.basic_ack(method.delivery_tag)
+
+    channel.basic_consume(callback, queue=QUEUE)
+
+    # start consuming (blocks)
+    channel.start_consuming()
+    connection.close()
 
 if __name__ == '__main__':
     format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:%(lineno)s %(funcName)s(): %(message)s'
