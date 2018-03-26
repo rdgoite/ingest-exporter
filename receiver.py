@@ -18,6 +18,7 @@ class IngestReceiver:
     def run(self, newAssayMessage):
         ingestExporter = IngestExporter()
         ingestExporter.generateAssayBundle(newAssayMessage)
+        self.completeBundle(newAssayMessage)
 
 
     def completeBundle(self, assayMessage):
