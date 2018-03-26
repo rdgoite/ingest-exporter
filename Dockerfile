@@ -4,7 +4,7 @@ MAINTAINER Simon Jupp "jupp@ebi.ac.uk"
 RUN mkdir /app
 WORKDIR /app
 ADD ingestbroker ./ingestbroker
-COPY export-to-dss.py listener.py receiver.py  requirements.txt ./
+COPY export-to-dss.py receiver.py  requirements.txt ./
 
 RUN pip install -r requirements.txt
 
