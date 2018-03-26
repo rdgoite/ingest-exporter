@@ -16,13 +16,9 @@ class IngestReceiver:
         self.logger = LOGGER
 
     def run(self, newAssayMessage):
-        try:
-            ingestExporter = IngestExporter()
-            ingestExporter.generateAssayBundle(newAssayMessage)
-            self.completeBundle(newAssayMessage)
-        except Exception, e:
-            # TODO : depending on the exception, reject the message so that it gets requeued
-            self.logger.exception("Failed to export to dss: "+newAssayMessage["callbackLink"]+ ", error:"+str(e))
+        ingestExporter = IngestExporter()
+        ingestExporter.generateAssayBundle(newAssayMessage)
+
 
     def completeBundle(self, assayMessage):
         self.logger.info("Sending a completed message for assay "+assayMessage["callbackLink"])

@@ -27,8 +27,16 @@ def initReceivers(options):
     channel.queue_bind(queue=QUEUE, exchange=EXCHANGE, routing_key=ROUTING_KEY)
 
     def callback(ch, method, properties, body):
-        receiver.run(json.loads(body))
-        ch.basic_ack(method.delivery_tag)
+        success = False
+
+        try:
+            receiver.run(json.loads(body))
+            success = True
+        except Exception:
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+
+        if success:
+            ch.basic_ack(method.delivery_tag)
 
     channel.basic_consume(callback, queue=QUEUE)
 
