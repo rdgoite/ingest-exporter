@@ -33,7 +33,7 @@ def initReceivers(options):
             receiver.run(json.loads(body))
             success = True
         except Exception:
-            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=True)
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
         if success:
             ch.basic_ack(method.delivery_tag)
