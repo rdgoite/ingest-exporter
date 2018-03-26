@@ -1,7 +1,5 @@
-import os
+import os, pika, json
 import logging
-import pika
-import json
 from ingestbroker.broker.ingestexportservice import IngestExporter
 
 DEFAULT_RABBIT_URL=os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
@@ -23,6 +21,7 @@ class IngestReceiver:
             ingestExporter.generateAssayBundle(newAssayMessage)
             self.completeBundle(newAssayMessage)
         except Exception, e:
+            # TODO : depending on the exception, reject the message so that it gets requeued
             self.logger.exception("Failed to export to dss: "+newAssayMessage["callbackLink"]+ ", error:"+str(e))
 
     def completeBundle(self, assayMessage):
@@ -40,4 +39,5 @@ class IngestReceiver:
         channel.basic_publish(exchange=EXCHANGE,
                               routing_key=ASSAY_COMPLETED_ROUTING_KEY,
                               body=json.dumps(assayCompletedMessage))
+
         connection.close()
