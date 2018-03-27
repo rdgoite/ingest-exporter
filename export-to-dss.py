@@ -11,7 +11,7 @@ from optparse import OptionParser
 import os, sys, json
 import time
 import logging
-from kombu import Connection, Exchange, Queue
+from kombu import Connection, Exchange, Queue, Producer
 from receiver import IngestReceiver
 
 
@@ -28,24 +28,34 @@ def initReceivers(options):
 
     receiver = IngestReceiver()
 
+    def requeue(body):
+        with Connection(DEFAULT_RABBIT_URL) as publish_conn:
+            with publish_conn.channel() as channel:
+                producer = Producer(channel)
+                producer.publish(
+                    json.loads(body),
+                    retry=True,
+                    exchange=EXCHANGE,
+                    routing_key=ROUTING_KEY
+                )
+
     def callback(body, message):
-        message.ack()
         success = False
         try:
             receiver.run(json.loads(body))
             success = True
         except Exception, e:
-            message.reject(requeue=True)
             logger.exception(str(e))
-            logger.info('Nacked! ' + str(message.delivery_tag))
+            requeue(body)
+            logger.info('Requeueing due to error! ' + str(message.delivery_tag))
 
         if success:
-            logger.info('Acked! ' + str(message.delivery_tag))
+            logger.info('Finished! ' + str(message.delivery_tag))
 
 
 
     assayExchange = Exchange(EXCHANGE, EXCHANGE_TYPE, passive=True, durable=False)
-    assayCreatedQueue = Queue(QUEUE, exchange=assayExchange, routing_key=ROUTING_KEY, durable=False)
+    assayCreatedQueue = Queue(QUEUE, exchange=assayExchange, routing_key=ROUTING_KEY, durable=False, no_ack=True)
 
 
     with Connection(DEFAULT_RABBIT_URL, connect_timeout=1000, heartbeat=1000) as conn:
