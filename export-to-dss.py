@@ -20,6 +20,8 @@ QUEUE = 'ingest.assays.bundle.create'
 ROUTING_KEY = 'ingest.assays.submitted'
 
 def initReceivers(options):
+    logger = logging.getLogger(__name__)
+
     receiver = IngestReceiver()
     connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
     channel = connection.channel()
@@ -32,11 +34,14 @@ def initReceivers(options):
         try:
             receiver.run(json.loads(body))
             success = True
-        except Exception:
+        except Exception, e:
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
+            logger.exception(str(e))
+            logger.info('Nacked! ' + str(method.delivery_tag))
 
         if success:
             ch.basic_ack(method.delivery_tag)
+            logger.info('Acked! ' + str(method.delivery_tag))
 
     channel.basic_consume(callback, queue=QUEUE)
 
