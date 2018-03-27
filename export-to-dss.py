@@ -9,6 +9,7 @@ __license__ = "Apache 2.0"
 
 from optparse import OptionParser
 import os, sys, json
+import time
 import logging
 from kombu import Connection, Exchange, Queue
 from receiver import IngestReceiver
@@ -54,6 +55,7 @@ def initReceivers(options):
             # Process messages and handle events on all channels
             while True:
                 conn.drain_events()
+                time.sleep(990)
                 conn.heartbeat_check()
 
 
