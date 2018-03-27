@@ -33,7 +33,7 @@ def initReceivers(options):
             with publish_conn.channel() as channel:
                 producer = Producer(channel)
                 producer.publish(
-                    json.loads(body),
+                    body,
                     retry=True,
                     exchange=EXCHANGE,
                     routing_key=ROUTING_KEY
