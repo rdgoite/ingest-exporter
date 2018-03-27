@@ -28,7 +28,6 @@ def initReceivers(options):
     channel.queue_declare(queue=QUEUE)
     channel.queue_bind(queue=QUEUE, exchange=EXCHANGE, routing_key=ROUTING_KEY)
 
-
     def callback(ch, method, properties, body):
         success = False
 
@@ -43,7 +42,6 @@ def initReceivers(options):
         if success:
             ch.basic_ack(method.delivery_tag)
             logger.info('Acked! ' + str(method.delivery_tag))
-
 
     channel.basic_consume(callback, queue=QUEUE)
 
