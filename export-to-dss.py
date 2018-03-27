@@ -23,7 +23,7 @@ def initReceivers(options):
     logger = logging.getLogger(__name__)
 
     receiver = IngestReceiver()
-    connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
+    connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL + "?heartbeat=600&blocked_connection_timeout=300"))
     channel = connection.channel()
     channel.queue_declare(queue=QUEUE)
     channel.queue_bind(queue=QUEUE, exchange=EXCHANGE, routing_key=ROUTING_KEY)
