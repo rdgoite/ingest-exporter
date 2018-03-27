@@ -1,4 +1,4 @@
 [submodule "ingestbroker"]
 	path = ingestbroker
 	url = git@github.com:HumanCellAtlas/ingest-broker.git
-	branch = requests_retry
+	branch = develop/5
