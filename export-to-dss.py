@@ -29,8 +29,8 @@ def initReceivers(options):
     receiver = IngestReceiver()
 
     def callback(body, message):
+        message.ack()
         success = False
-
         try:
             receiver.run(json.loads(body))
             success = True
@@ -40,7 +40,6 @@ def initReceivers(options):
             logger.info('Nacked! ' + str(message.delivery_tag))
 
         if success:
-            message.ack()
             logger.info('Acked! ' + str(message.delivery_tag))
 
 
