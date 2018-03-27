@@ -27,6 +27,7 @@ def initReceivers(options):
     channel = connection.channel()
     channel.queue_declare(queue=QUEUE)
     channel.queue_bind(queue=QUEUE, exchange=EXCHANGE, routing_key=ROUTING_KEY)
+    channel.basic_qos(prefetch_count=1)
 
     def callback(ch, method, properties, body):
         success = False
@@ -60,4 +61,3 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     initReceivers(options)
-
