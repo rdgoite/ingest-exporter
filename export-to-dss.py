@@ -78,4 +78,3 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     initReceivers(options)
-
