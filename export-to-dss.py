@@ -8,8 +8,10 @@ __license__ = "Apache 2.0"
 
 
 from optparse import OptionParser
-import os, sys, pika, json
+import os, sys, json
+import time
 import logging
+from kombu import Connection, Exchange, Queue, Producer
 from receiver import IngestReceiver
 
 
@@ -19,36 +21,51 @@ EXCHANGE_TYPE = 'topic'
 QUEUE = 'ingest.assays.bundle.create'
 ROUTING_KEY = 'ingest.assays.submitted'
 
+
+
 def initReceivers(options):
     logger = logging.getLogger(__name__)
 
     receiver = IngestReceiver()
-    connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL + "?heartbeat=1000&blocked_connection_timeout=1000"))
-    channel = connection.channel()
-    channel.queue_declare(queue=QUEUE)
-    channel.queue_bind(queue=QUEUE, exchange=EXCHANGE, routing_key=ROUTING_KEY)
-    channel.basic_qos(prefetch_count=1)
 
-    def callback(ch, method, properties, body):
+    def requeue(body):
+        with Connection(DEFAULT_RABBIT_URL) as publish_conn:
+            with publish_conn.channel() as channel:
+                producer = Producer(channel)
+                producer.publish(
+                    body,
+                    retry=True,
+                    exchange=EXCHANGE,
+                    routing_key=ROUTING_KEY
+                )
+
+    def callback(body, message):
         success = False
-
         try:
             receiver.run(json.loads(body))
             success = True
         except Exception, e:
-            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
             logger.exception(str(e))
-            logger.info('Nacked! ' + str(method.delivery_tag))
+            requeue(body)
+            logger.info('Requeueing due to error! ' + str(message.delivery_tag))
 
         if success:
-            ch.basic_ack(method.delivery_tag)
-            logger.info('Acked! ' + str(method.delivery_tag))
+            logger.info('Finished! ' + str(message.delivery_tag))
 
-    channel.basic_consume(callback, queue=QUEUE)
 
-    # start consuming (blocks)
-    channel.start_consuming()
-    connection.close()
+
+    assayExchange = Exchange(EXCHANGE, EXCHANGE_TYPE, passive=True, durable=False)
+    assayCreatedQueue = Queue(QUEUE, exchange=assayExchange, routing_key=ROUTING_KEY, durable=False, no_ack=True)
+
+
+    with Connection(DEFAULT_RABBIT_URL, connect_timeout=1000, heartbeat=1000) as conn:
+        # consume
+        with conn.Consumer(assayCreatedQueue, callbacks=[callback]) as consumer:
+            # Process messages and handle events on all channels
+            while True:
+                conn.drain_events()
+                conn.heartbeat_check()
+
 
 if __name__ == '__main__':
     format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:%(lineno)s %(funcName)s(): %(message)s'
