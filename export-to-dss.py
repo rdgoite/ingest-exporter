@@ -10,7 +10,7 @@ from optparse import OptionParser
 import os, sys, json
 import logging
 from kombu import Connection, Exchange, Queue
-from kombu.mixins import ConsumerMixin
+from kombu.mixins import ConsumerProducerMixin
 
 from receiver import IngestReceiver
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 receiver = IngestReceiver()
 
 
-class Worker(ConsumerMixin):
+class Worker(ConsumerProducerMixin):
     def __init__(self, connection, queues):
         self.connection = connection
         self.queues = queues
@@ -34,17 +34,30 @@ class Worker(ConsumerMixin):
                          callbacks=[self.on_message])]
 
     def on_message(self, body, message):
+        message.ack()
         success = False
         try:
             receiver.run(json.loads(body))
             success = True
-        except Exception, e:
-            message.requeue()
-            logger.exception(str(e))
+        except Exception, e1:
+            try:
+                logger.info('Requeueing' + body)
+                self.requeue_on_error(body)
+            except Exception, e2:
+                logger.exception("Critical error: could not requeue message:" + body)
+
+            logger.exception(str(e1))
 
         if success:
-            message.ack()
             logger.info('Finished! ' + str(message.delivery_tag))
+
+    def requeue_on_error(self, body):
+        self.producer.publish(
+            body,
+            exchange=EXCHANGE,
+            routing_key=ROUTING_KEY,
+            retry=True,
+        )
 
 
 if __name__ == '__main__':
@@ -61,6 +74,6 @@ if __name__ == '__main__':
     assay_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE)
     assay_queues = [Queue(QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
 
-    with Connection(DEFAULT_RABBIT_URL, heartbeat=4) as conn:
+    with Connection(DEFAULT_RABBIT_URL, heartbeat=1200) as conn:
         worker = Worker(conn, assay_queues)
         worker.run()
