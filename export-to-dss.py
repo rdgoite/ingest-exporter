@@ -6,35 +6,59 @@ call the ingest export service to generate the bundles and submit bundles to dat
 __author__ = "jupp"
 __license__ = "Apache 2.0"
 
-
 from optparse import OptionParser
-import os, sys, pika, json
+import os, sys, json
 import logging
+from kombu import Connection, Exchange, Queue
+from kombu.mixins import ConsumerProducerMixin
+
 from receiver import IngestReceiver
 
-
-DEFAULT_RABBIT_URL=os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
+DEFAULT_RABBIT_URL = os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
 EXCHANGE = 'ingest.assays.exchange'
 EXCHANGE_TYPE = 'topic'
 QUEUE = 'ingest.assays.bundle.create'
 ROUTING_KEY = 'ingest.assays.submitted'
 
-def initReceivers(options):
-    receiver = IngestReceiver()
-    connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
-    channel = connection.channel()
-    channel.queue_declare(queue=QUEUE)
-    channel.queue_bind(queue=QUEUE, exchange=EXCHANGE, routing_key=ROUTING_KEY)
+logger = logging.getLogger(__name__)
+receiver = IngestReceiver()
 
-    def callback(ch, method, properties, body):
-        receiver.run(json.loads(body))
-        ch.basic_ack(method.delivery_tag)
 
-    channel.basic_consume(callback, queue=QUEUE)
+class Worker(ConsumerProducerMixin):
+    def __init__(self, connection, queues):
+        self.connection = connection
+        self.queues = queues
 
-    # start consuming (blocks)
-    channel.start_consuming()
-    connection.close()
+    def get_consumers(self, Consumer, channel):
+        return [Consumer(queues=self.queues,
+                         callbacks=[self.on_message])]
+
+    def on_message(self, body, message):
+        message.ack()
+        success = False
+        try:
+            receiver.run(json.loads(body))
+            success = True
+        except Exception, e1:
+            try:
+                logger.info('Requeueing' + body)
+                self.requeue_on_error(body)
+            except Exception, e2:
+                logger.exception("Critical error: could not requeue message:" + body)
+
+            logger.exception(str(e1))
+
+        if success:
+            logger.info('Finished! ' + str(message.delivery_tag))
+
+    def requeue_on_error(self, body):
+        self.producer.publish(
+            body,
+            exchange=EXCHANGE,
+            routing_key=ROUTING_KEY,
+            retry=True,
+        )
+
 
 if __name__ == '__main__':
     format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:%(lineno)s %(funcName)s(): %(message)s'
@@ -46,5 +70,10 @@ if __name__ == '__main__':
     parser.add_option("-l", "--log", help="the logging level", default='INFO')
 
     (options, args) = parser.parse_args()
-    initReceivers(options)
 
+    assay_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE)
+    assay_queues = [Queue(QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
+
+    with Connection(DEFAULT_RABBIT_URL, heartbeat=1200) as conn:
+        worker = Worker(conn, assay_queues)
+        worker.run()
