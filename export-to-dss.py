@@ -7,58 +7,23 @@ __author__ = "jupp"
 __license__ = "Apache 2.0"
 
 from optparse import OptionParser
+from kombu import Connection, Exchange, Queue
+
+from receiver import AssayWorker
+from bundlereceiver import BundleWorker
+
 import os, sys, json
 import logging
-from kombu import Connection, Exchange, Queue
-from kombu.mixins import ConsumerProducerMixin
-
-from receiver import IngestReceiver
+import threading
 
 DEFAULT_RABBIT_URL = os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
 EXCHANGE = 'ingest.assays.exchange'
 EXCHANGE_TYPE = 'topic'
 QUEUE = 'ingest.assays.bundle.create'
+
+BUNDLE_VERIFY_QUEUE = 'ingest.assays.bundle.verify'
 ROUTING_KEY = 'ingest.assays.submitted'
-
-logger = logging.getLogger(__name__)
-receiver = IngestReceiver()
-
-
-class Worker(ConsumerProducerMixin):
-    def __init__(self, connection, queues):
-        self.connection = connection
-        self.queues = queues
-
-    def get_consumers(self, Consumer, channel):
-        return [Consumer(queues=self.queues,
-                         callbacks=[self.on_message])]
-
-    def on_message(self, body, message):
-        message.ack()
-        success = False
-        try:
-            receiver.run(json.loads(body))
-            success = True
-        except Exception, e1:
-            try:
-                logger.info('Requeueing' + body)
-                self.requeue_on_error(body)
-            except Exception, e2:
-                logger.exception("Critical error: could not requeue message:" + body)
-
-            logger.exception(str(e1))
-
-        if success:
-            logger.info('Finished! ' + str(message.delivery_tag))
-
-    def requeue_on_error(self, body):
-        self.producer.publish(
-            body,
-            exchange=EXCHANGE,
-            routing_key=ROUTING_KEY,
-            retry=True,
-        )
-
+BUNDLE_COMPLETED_ROUTING_KEY = 'ingest.bundles.completed'
 
 if __name__ == '__main__':
     format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:%(lineno)s %(funcName)s(): %(message)s'
@@ -72,8 +37,14 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     assay_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE)
+
     assay_queues = [Queue(QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
 
+    bundle_queues = [Queue(BUNDLE_VERIFY_QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
+
     with Connection(DEFAULT_RABBIT_URL, heartbeat=1200) as conn:
-        worker = Worker(conn, assay_queues)
-        worker.run()
+        worker = AssayWorker(conn, assay_queues)
+        bundle_worker = BundleWorker(conn, assay_queues)
+
+        t = threading.Thread(target=worker.run)
+        t.start()
