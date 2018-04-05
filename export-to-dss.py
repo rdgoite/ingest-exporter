@@ -19,10 +19,11 @@ import threading
 DEFAULT_RABBIT_URL = os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
 EXCHANGE = 'ingest.assays.exchange'
 EXCHANGE_TYPE = 'topic'
+
 QUEUE = 'ingest.assays.bundle.create'
+ROUTING_KEY = 'ingest.assays.submitted'
 
 BUNDLE_VERIFY_QUEUE = 'ingest.assays.bundle.verify'
-ROUTING_KEY = 'ingest.assays.submitted'
 BUNDLE_COMPLETED_ROUTING_KEY = 'ingest.bundles.completed'
 
 if __name__ == '__main__':
@@ -40,13 +41,16 @@ if __name__ == '__main__':
 
     assay_queues = [Queue(QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
 
-    bundle_queues = [Queue(BUNDLE_VERIFY_QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
+    bundle_queues = [Queue(BUNDLE_VERIFY_QUEUE, assay_exchange, routing_key=BUNDLE_COMPLETED_ROUTING_KEY)]
 
     with Connection(DEFAULT_RABBIT_URL, heartbeat=1200) as conn:
         worker = AssayWorker(conn, assay_queues)
-        bundle_worker = BundleWorker(conn, assay_queues)
+        bundle_worker = BundleWorker(conn, bundle_queues)
 
-        t = threading.Thread(target=worker.run)
-        t.start()
+        assay_worker_thread = threading.Thread(target=worker.run)
+        assay_worker_thread.start()
+
+        bundle_worker_thread = threading.Thread(target=bundle_worker.run)
+        bundle_worker_thread.start()
 
 

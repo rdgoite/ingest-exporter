@@ -15,6 +15,7 @@ EXCHANGE = 'ingest.assays.exchange'
 ASSAY_COMPLETED_ROUTING_KEY = 'ingest.assays.completed'
 BUNDLE_COMPLETED_ROUTING_KEY = 'ingest.bundles.completed'
 
+
 class BundleReceiver:
 
     def __init__(self):
@@ -30,14 +31,16 @@ class BundleReceiver:
             for bundle_file in files:
                 if "s3_etag" not in bundle_file or not bundle_file["s3_etag"]:
                     raise ValueError("File has no s3 etag")
+
         else:
             raise ValueError("Couldn't find bundle files")
 
+        self.logger.info("Completing bundle" + str(assay_message))
         self.complete_bundle(assay_message)
 
     def complete_bundle(self, assay_message):
 
-        self.logger.info("Sending a completed message for assay "+assay_message["callbackLink"])
+        self.logger.info("Sending a completed message for process " + str(assay_message["callbackLink"]))
 
         assay_completed_message = dict()
 
