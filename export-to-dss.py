@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    assay_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE)
+    assay_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE, passive=True, durable=False)
 
     assay_queues = [Queue(QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
 
@@ -48,3 +48,5 @@ if __name__ == '__main__':
 
         t = threading.Thread(target=worker.run)
         t.start()
+
+
