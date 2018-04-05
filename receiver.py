@@ -30,7 +30,7 @@ class IngestReceiver:
         self.verify_bundle(newAssayMessage)
 
     def verify_bundle(self, assayMessage):
-        self.logger.info("Sending a message to verify bundle " + assayMessage["bundleUuid"])
+        self.logger.info("Sending a message to verify bundle " + str(assayMessage["bundleUuid"]))
 
         connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
         channel = connection.channel()
@@ -58,13 +58,14 @@ class AssayWorker(ConsumerProducerMixin):
             self.receiver.run(json.loads(body))
             success = True
         except Exception, e1:
+            self.logger.exception(str(e1))
             try:
                 self.logger.info('Requeueing' + body)
                 self.requeue_on_error(body)
             except Exception, e2:
                 self.logger.exception("Critical error: could not requeue message:" + body)
 
-            self.logger.exception(str(e1))
+
 
         if success:
             self.logger.info('Finished! ' + str(message.delivery_tag))
