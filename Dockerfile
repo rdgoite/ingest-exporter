@@ -1,5 +1,10 @@
-FROM jfloff/alpine-python:2.7-slim
+FROM python:2-alpine
 MAINTAINER Simon Jupp "jupp@ebi.ac.uk"
+
+RUN apk update && \
+    apk add build-base && \
+    apk add openssl-dev && \
+    apk add libffi-dev
 
 RUN mkdir /app
 WORKDIR /app
