@@ -15,10 +15,13 @@ from kombu.mixins import ConsumerProducerMixin
 from receiver import IngestReceiver
 
 DEFAULT_RABBIT_URL = os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
-EXCHANGE = 'ingest.assays.exchange'
+EXCHANGE = 'ingest.bundle.exchange'
 EXCHANGE_TYPE = 'topic'
-QUEUE = 'ingest.assays.bundle.create'
-ROUTING_KEY = 'ingest.assays.submitted'
+ASSAY_QUEUE = 'ingest.bundle.assay.create'
+ANALYSIS_QUEUE = 'ingest.bundle.analysis.create'
+
+ASSAY_ROUTING_KEY = 'ingest.bundle.assay.submitted'
+ANALYSIS_ROUTING_KEY = 'ingest.bundle.analysis.submitted'
 
 logger = logging.getLogger(__name__)
 receiver = IngestReceiver()
@@ -55,7 +58,7 @@ class Worker(ConsumerProducerMixin):
         self.producer.publish(
             body,
             exchange=EXCHANGE,
-            routing_key=ROUTING_KEY,
+            routing_key=ASSAY_ROUTING_KEY,
             retry=True,
         )
 
@@ -71,9 +74,10 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-    assay_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE)
-    assay_queues = [Queue(QUEUE, assay_exchange, routing_key=ROUTING_KEY)]
+    bundle_exchange = Exchange(EXCHANGE, type=EXCHANGE_TYPE)
+    bundle_queues = [Queue(ASSAY_QUEUE, bundle_exchange, routing_key=ASSAY_ROUTING_KEY),
+                     Queue(ANALYSIS_QUEUE, bundle_exchange, routing_key=ANALYSIS_ROUTING_KEY)]
 
     with Connection(DEFAULT_RABBIT_URL, heartbeat=1200) as conn:
-        worker = Worker(conn, assay_queues)
+        worker = Worker(conn, bundle_queues)
         worker.run()
