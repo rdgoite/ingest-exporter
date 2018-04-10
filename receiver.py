@@ -9,7 +9,7 @@ LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
 LOGGER = logging.getLogger(__name__)
 
 EXCHANGE = 'ingest.assays.exchange'
-ASSAY_COMPLETED_ROUTING_KEY = 'ingest.assays.completed'
+ASSAY_COMPLETED_ROUTING_KEY = 'ingest.bundle.assay.completed'
 class IngestReceiver:
 
     def __init__(self):
@@ -17,7 +17,7 @@ class IngestReceiver:
 
     def run(self, newAssayMessage):
         ingestExporter = IngestExporter()
-        ingestExporter.generateAssayBundle(newAssayMessage)
+        ingestExporter.generateBundle(newAssayMessage)
         self.completeBundle(newAssayMessage)
 
 
@@ -28,8 +28,8 @@ class IngestReceiver:
 
         assayCompletedMessage["documentId"] = assayMessage["documentId"]
         assayCompletedMessage["envelopeUuid"] = assayMessage["envelopeUuid"]
-        assayCompletedMessage["assayIndex"] = assayMessage["assayIndex"]
-        assayCompletedMessage["totalAssays"] = assayMessage["totalAssays"]
+        assayCompletedMessage["index"] = assayMessage["index"]
+        assayCompletedMessage["total"] = assayMessage["total"]
 
         connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
         channel = connection.channel()
