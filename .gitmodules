@@ -1,4 +1,4 @@
 [submodule "ingestbroker"]
 	path = ingestbroker
 	url = git@github.com:HumanCellAtlas/ingest-broker.git
-	branch = v5-analysis-bundle
+	branch = develop/5
