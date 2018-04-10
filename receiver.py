@@ -8,7 +8,7 @@ LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
               '-35s %(lineno) -5d: %(message)s')
 LOGGER = logging.getLogger(__name__)
 
-EXCHANGE = 'ingest.assays.exchange'
+EXCHANGE = 'ingest.bundle.exchange'
 ASSAY_COMPLETED_ROUTING_KEY = 'ingest.bundle.assay.completed'
 class IngestReceiver:
 
