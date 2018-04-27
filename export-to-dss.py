@@ -42,11 +42,11 @@ class Worker(ConsumerProducerMixin):
         try:
             receiver.run(json.loads(body))
             success = True
-        except Exception, e1:
+        except Exception as e1:
             try:
                 logger.info('Requeueing' + body)
                 self.requeue_on_error(body)
-            except Exception, e2:
+            except Exception as e2:
                 logger.exception("Critical error: could not requeue message:" + body)
 
             logger.exception(str(e1))
