@@ -1,6 +1,7 @@
 import os, pika, json
 import logging
-from ingestbroker.broker.ingestexportservice import IngestExporter
+
+from ingest.exporter.ingestexportservice import IngestExporter
 
 DEFAULT_RABBIT_URL=os.path.expandvars(os.environ.get('RABBIT_URL', 'amqp://localhost:5672'))
 DEFAULT_QUEUE_NAME=os.environ.get('SUBMISSION_QUEUE_NAME', 'ingest.envelope.submitted.queue')
@@ -10,6 +11,8 @@ LOGGER = logging.getLogger(__name__)
 
 EXCHANGE = 'ingest.bundle.exchange'
 ASSAY_COMPLETED_ROUTING_KEY = 'ingest.bundle.assay.completed'
+
+
 class IngestReceiver:
 
     def __init__(self):
