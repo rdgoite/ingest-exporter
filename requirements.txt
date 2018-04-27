@@ -5,3 +5,4 @@ kombu
 pika
 jsonschema
 hca==3.4.5
+hca-ingest==0.1a0
