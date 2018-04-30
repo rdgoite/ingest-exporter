@@ -8,7 +8,7 @@ RUN apk update && \
 
 RUN mkdir /app
 WORKDIR /app
-ADD ingestbroker ./ingestbroker
+
 COPY export-to-dss.py receiver.py  requirements.txt ./
 
 RUN pip install -r requirements.txt
