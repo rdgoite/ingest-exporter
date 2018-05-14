@@ -1,4 +1,4 @@
-FROM python:2-alpine
+FROM python:3-alpine
 MAINTAINER Simon Jupp "jupp@ebi.ac.uk"
 
 RUN apk update && \
@@ -8,7 +8,7 @@ RUN apk update && \
 
 RUN mkdir /app
 WORKDIR /app
-ADD ingestbroker ./ingestbroker
+
 COPY export-to-dss.py receiver.py  requirements.txt ./
 
 RUN pip install -r requirements.txt
