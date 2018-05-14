@@ -42,7 +42,7 @@ class Worker(ConsumerProducerMixin):
         try:
             receiver.run(json.loads(body))
             success = True
-        except Exception, e1:
+        except Exception as e1:
             logger.exception(str(e1))
             logger.error("Failed to process the exporter message:" + body)
 
