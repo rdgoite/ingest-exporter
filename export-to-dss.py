@@ -43,24 +43,11 @@ class Worker(ConsumerProducerMixin):
             receiver.run(json.loads(body))
             success = True
         except Exception as e1:
-            try:
-                logger.info('Requeueing' + body)
-                self.requeue_on_error(body)
-            except Exception as e2:
-                logger.exception("Critical error: could not requeue message:" + body)
-
             logger.exception(str(e1))
+            logger.error("Failed to process the exporter message:" + body)
 
         if success:
             logger.info('Finished! ' + str(message.delivery_tag))
-
-    def requeue_on_error(self, body):
-        self.producer.publish(
-            body,
-            exchange=EXCHANGE,
-            routing_key=ASSAY_ROUTING_KEY,
-            retry=True,
-        )
 
 
 if __name__ == '__main__':
