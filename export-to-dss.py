@@ -34,10 +34,10 @@ class Worker(ConsumerProducerMixin):
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=self.queues,
-                         callbacks=[self.on_message])]
+                         callbacks=[self.on_message],
+                         no_ack=True)]
 
     def on_message(self, body, message):
-        message.ack()
         success = False
         start = time.clock()
         try:
