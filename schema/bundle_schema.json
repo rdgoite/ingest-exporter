@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "$id": "bundle_schema"
+  "$id": "bundle_schema",
   "additionalProperties": true,
   "description": "generic schema for a bundled metadata file",
   "title": "bundle_metadata",
