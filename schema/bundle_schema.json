@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": true,
+  "description": "generic schema for a bundled metadata file",
+  "title": "bundle_metadata",
+  "required": [
+        "content"
+  ],
+  "properties": {
+    "content": {
+      "description": "Content of the experimental metadata",
+      "type": "object"
+    }
+  }
+}
