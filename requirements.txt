@@ -5,4 +5,4 @@ kombu
 pika
 jsonschema
 hca==3.5.1
--e "git+https://github.com/HumanCellAtlas/ingest-client.git@79eb32937afae83532087a9c0a1d9c5b21f3ffbd#egg=hca_ingest"
+-e "git+https://github.com/HumanCellAtlas/ingest-client.git@8cde0371fcd2c6eca348bf1e086d2e17f7a36f34#egg=hca_ingest"
