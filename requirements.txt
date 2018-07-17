@@ -4,4 +4,5 @@ requests
 kombu
 pika
 jsonschema
-hca==3.4.5
+hca==3.5.1
+hca-ingest==0.4

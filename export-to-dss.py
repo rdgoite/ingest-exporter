@@ -7,7 +7,7 @@ __author__ = "jupp"
 __license__ = "Apache 2.0"
 
 from optparse import OptionParser
-import os, sys, json
+import os, sys, json, time
 import logging
 from kombu import Connection, Exchange, Queue
 from kombu.mixins import ConsumerProducerMixin
@@ -39,15 +39,18 @@ class Worker(ConsumerProducerMixin):
     def on_message(self, body, message):
         message.ack()
         success = False
+        start = time.clock()
         try:
             receiver.run(json.loads(body))
             success = True
-        except Exception, e1:
+        except Exception as e1:
             logger.exception(str(e1))
             logger.error("Failed to process the exporter message:" + body)
-
         if success:
+            end = time.clock()
+            time_to_export = end - start
             logger.info('Finished! ' + str(message.delivery_tag))
+            logger.info('Export time (ms): ' + str(time_to_export * 1000))
 
 
 if __name__ == '__main__':
