@@ -1,5 +1,7 @@
-import os, pika, json
+import json
 import logging
+import os
+import pika
 
 from ingest.exporter.ingestexportservice import IngestExporter
 
@@ -18,26 +20,29 @@ class IngestReceiver:
     def __init__(self):
         self.logger = LOGGER
 
-    def run(self, newAssayMessage):
-        ingestExporter = IngestExporter()
-        ingestExporter.generateBundle(newAssayMessage)
-        self.completeBundle(newAssayMessage)
+    def run(self, message):
+        self.logger.info('process received ' + message["callbackLink"])
+        self.logger.info('process index: ' + str(message["index"]) + ', total processes: ' + str(message["total"]))
 
+        ingest_exporter = IngestExporter()
+        ingest_exporter.export_bundle(message["envelopeUuid"], message["documentUuid"])
 
-    def completeBundle(self, assayMessage):
-        self.logger.info("Sending a completed message for assay "+assayMessage["callbackLink"])
+        self.complete_bundle(message)
 
-        assayCompletedMessage = dict()
+    def complete_bundle(self, message):
+        self.logger.info("Sending a completed message for process " + message["callbackLink"])
 
-        assayCompletedMessage["documentId"] = assayMessage["documentId"]
-        assayCompletedMessage["envelopeUuid"] = assayMessage["envelopeUuid"]
-        assayCompletedMessage["index"] = assayMessage["index"]
-        assayCompletedMessage["total"] = assayMessage["total"]
+        completed_message = dict()
+
+        completed_message["documentId"] = message["documentId"]
+        completed_message["envelopeUuid"] = message["envelopeUuid"]
+        completed_message["index"] = message["index"]
+        completed_message["total"] = message["total"]
 
         connection = pika.BlockingConnection(pika.URLParameters(DEFAULT_RABBIT_URL))
         channel = connection.channel()
         channel.basic_publish(exchange=EXCHANGE,
                               routing_key=ASSAY_COMPLETED_ROUTING_KEY,
-                              body=json.dumps(assayCompletedMessage))
+                              body=json.dumps(completed_message))
 
         connection.close()

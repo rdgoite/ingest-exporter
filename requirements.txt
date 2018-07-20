@@ -4,4 +4,4 @@ requests
 kombu
 pika
 jsonschema
--e "git+https://github.com/HumanCellAtlas/ingest-client.git@fc9f30e664e816c27256eecc80d26853b8699e61#egg=hca_ingest"
+-e "git+https://github.com/HumanCellAtlas/ingest-client.git@ed3aff968be9fc5603a303f9a9bb2eedc8940cc6#egg=hca_ingest"
