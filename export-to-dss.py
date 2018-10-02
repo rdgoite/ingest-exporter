@@ -45,7 +45,7 @@ class Worker(ConsumerProducerMixin):
             success = True
         except Exception as e1:
             logger.exception(str(e1))
-            logger.error("Failed to process the exporter message:" + body)
+            logger.error("Failed to process the exporter message:" + body + "due to error:" + str(e1))
         if success:
             end = time.clock()
             time_to_export = end - start
